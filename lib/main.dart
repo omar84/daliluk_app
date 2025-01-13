@@ -41,8 +41,8 @@ class _WebViewPageState extends State<WebViewPage> {
 
     // Set the status bar color and icon brightness
     SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
-      statusBarColor: Colors.white, // Set the status bar color to white
-      statusBarIconBrightness: Brightness.dark, // Set the icon brightness to dark
+      statusBarColor: Colors.white,
+      statusBarIconBrightness: Brightness.dark,
     ));
 
     // Get the preferred language from SharedPreferences
@@ -99,7 +99,9 @@ class _WebViewPageState extends State<WebViewPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
-        child: WebViewWidget(controller: _controller),
+        child: WebViewWidget(
+          controller: _controller,
+        ),
       ),
     );
   }
