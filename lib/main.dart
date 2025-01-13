@@ -30,7 +30,8 @@ class WebViewPage extends StatefulWidget {
 class _WebViewPageState extends State<WebViewPage> with WidgetsBindingObserver {
   late final WebViewController _controller;
   String? _preferredLanguage;
-  bool _appInForeground = false; 
+  bool _appInForeground = false;
+  bool _isLoading = true; // Tracks loading state
 
   @override
   void initState() {
@@ -43,9 +44,12 @@ class _WebViewPageState extends State<WebViewPage> with WidgetsBindingObserver {
       ..setNavigationDelegate(
         NavigationDelegate(
           onProgress: (int progress) {
-            // Update loading bar
+            // You can show progress here if needed
           },
           onPageStarted: (String url) {
+            setState(() {
+              _isLoading = true; // Show loading screen
+            });
             print('Page started loading: $url');
 
             // Parse the URL and check for the 'lang' parameter
@@ -53,12 +57,14 @@ class _WebViewPageState extends State<WebViewPage> with WidgetsBindingObserver {
             String? lang = uri.queryParameters['lang'];
 
             if (lang != null && _preferredLanguage != lang) {
-              // Update the preferred language and URL
               _preferredLanguage = lang;
               _savePreferredLanguage(lang);
             }
           },
           onPageFinished: (String url) {
+            setState(() {
+              _isLoading = false; // Hide loading screen
+            });
             print('Page finished loading: $url');
           },
           onWebResourceError: (WebResourceError error) {
@@ -68,23 +74,20 @@ class _WebViewPageState extends State<WebViewPage> with WidgetsBindingObserver {
       )
       ..loadRequest(Uri.parse('https://dalil.uk?key=kit1'));
 
-    // Set the status bar color and icon brightness
     SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
       statusBarColor: Colors.white,
       statusBarIconBrightness: Brightness.dark,
     ));
 
-    // Get the preferred language from SharedPreferences
     _getPreferredLanguage().then((lang) {
       _preferredLanguage = lang;
 
-      // If preferred language is set, update the URL
       if (_preferredLanguage != null) {
         _updateUrlWithLanguage(_preferredLanguage!);
       }
     });
 
-    WidgetsBinding.instance!.addObserver(this); 
+    WidgetsBinding.instance.addObserver(this);
   }
 
   @override
@@ -92,38 +95,33 @@ class _WebViewPageState extends State<WebViewPage> with WidgetsBindingObserver {
     super.didChangeAppLifecycleState(state);
 
     if (state == AppLifecycleState.resumed) {
-      // App brought to foreground
-      if (!_appInForeground) { 
+      if (!_appInForeground) {
         _appInForeground = true;
-        _controller.reload(); 
+        _controller.reload();
         print('Reloading WebView after app resumed');
       }
     } else if (state == AppLifecycleState.paused) {
-      // App moved to background
       _appInForeground = false;
     }
   }
 
   @override
   void dispose() {
-    WidgetsBinding.instance!.removeObserver(this);
+    WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
 
-  // Update the WebView URL with the given language
   Future<void> _updateUrlWithLanguage(String lang) async {
     await _controller
         .loadRequest(Uri.parse('https://dalil.uk?key=kit1&lang=$lang'));
   }
 
-  // Save the preferred language to SharedPreferences
   Future<void> _savePreferredLanguage(String lang) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('preferred_language', lang);
     print('Preferred language saved: $lang');
   }
 
-  // Get the stored preferred language
   Future<String?> _getPreferredLanguage() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString('preferred_language') ?? 'ar';
@@ -133,8 +131,14 @@ class _WebViewPageState extends State<WebViewPage> with WidgetsBindingObserver {
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
-        child: WebViewWidget(
-          controller: _controller,
+        child: Stack(
+          children: [
+            WebViewWidget(controller: _controller),
+            if (_isLoading)
+              Center(
+                child: CircularProgressIndicator(), // Loading indicator
+              ),
+          ],
         ),
       ),
     );
