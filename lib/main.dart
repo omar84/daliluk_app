@@ -27,11 +27,11 @@ class WebViewPage extends StatefulWidget {
   _WebViewPageState createState() => _WebViewPageState();
 }
 
-class _WebViewPageState extends State<WebViewPage> with WidgetsBindingObserver {
+class _WebViewPageState extends State<WebViewPage> {
   late final WebViewController _controller;
   String? _preferredLanguage;
-  bool _appInForeground = false;
   bool _isLoading = true; // Tracks loading state
+  String websiteUrl = 'https://dalil.uk?key=kit1';
 
   @override
   void initState() {
@@ -72,7 +72,7 @@ class _WebViewPageState extends State<WebViewPage> with WidgetsBindingObserver {
           },
         ),
       )
-      ..loadRequest(Uri.parse('https://dalil.uk?key=kit1'));
+      ..loadRequest(Uri.parse(websiteUrl));
 
     SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
       statusBarColor: Colors.white,
@@ -86,34 +86,10 @@ class _WebViewPageState extends State<WebViewPage> with WidgetsBindingObserver {
         _updateUrlWithLanguage(_preferredLanguage!);
       }
     });
-
-    WidgetsBinding.instance.addObserver(this);
-  }
-
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    super.didChangeAppLifecycleState(state);
-
-    if (state == AppLifecycleState.resumed) {
-      if (!_appInForeground) {
-        _appInForeground = true;
-        _controller.reload();
-        print('Reloading WebView after app resumed');
-      }
-    } else if (state == AppLifecycleState.paused) {
-      _appInForeground = false;
-    }
-  }
-
-  @override
-  void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
-    super.dispose();
   }
 
   Future<void> _updateUrlWithLanguage(String lang) async {
-    await _controller
-        .loadRequest(Uri.parse('https://dalil.uk?key=kit1&lang=$lang'));
+    await _controller.loadRequest(Uri.parse(websiteUrl + '&lang=$lang'));
   }
 
   Future<void> _savePreferredLanguage(String lang) async {
